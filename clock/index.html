@@ -206,7 +206,7 @@
         }
 
         const normalizeCurrentTime = () => {
-            currentTime = currentTime.map(Math.floor);
+            currentTime = currentTime.map(v => parseInt(v, null)).map(v => isNaN(v) || v < 0 ? 0 : v);
             if (currentTime[2] >= 60) {
                 currentTime[1]++;
             }
@@ -254,6 +254,7 @@
         let speed = 1000;
         return {
             setTime: (hour, minute, second) => {
+
                 currentTime = [hour, minute, second];
                 updateTime();
             },
@@ -270,8 +271,10 @@
             onChange: (fn) => {
                 handlers.push(fn);
             },
-            setSpeed: (value) => {
-                speed = value !== 0 ? 1000 / value : 1000;
+            setSpeed: function (value) {
+                const float = parseFloat(value);
+
+                speed = isNaN(float) || float <= 0 ? 1000 : 1000 / value;
                 this.stop();
                 this.run();
             }
@@ -306,9 +309,9 @@
 
     const inputs = [...document.querySelectorAll('.time-input')];
     document.addEventListener('change', (e) => {
-        if(e.target.classList.contains('time-input')){
+        if (e.target.classList.contains('time-input')) {
             editableClock.setTime(...inputs.map(inp => parseInt(inp.value)));
-        }else if(e.target.classList.contains('speed')){
+        } else if (e.target.classList.contains('speed')) {
             editableClock.setSpeed(e.target.value);
         }
     });
