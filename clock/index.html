@@ -1,0 +1,278 @@
+<!doctype html>
+<!--suppress CssUnusedSymbol -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .clocks {
+            margin: 100px auto 10px auto;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .controls{
+            text-align: center;
+        }
+
+        .clock {
+            margin: 40px 20px;
+            position: relative;
+            height: 100px;
+            width: 100px;
+            /*border: 1px solid gray;*/
+            border-radius: 100%;
+        }
+
+        .hour {
+            text-align: center;
+            width: 20px;
+            height: 70px;
+            position: absolute;
+            top: -20px;
+            left: 40px;
+            transform-origin: center bottom;
+            z-index: 2;
+        }
+
+        .hour i {
+            display: block;
+        }
+
+        .hour:after {
+            content: '';
+            display: block;
+            position: absolute;
+            width: 1px;
+            height: 7px;
+            background: black;
+            left: 9px;
+            top: 20px;
+
+        }
+
+        .gauge {
+            width: 1px;
+            height: 50px;
+            position: absolute;
+            transform-origin: center bottom;
+            top: 0;
+            left: 49px;
+            z-index: 1;
+        }
+
+        .gauge:before {
+            content: '';
+            display: block;
+            width: 1px;
+            height: 5px;
+            background: gray;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+
+        .sec-arrow,
+        .min-arrow,
+        .hr-arrow {
+            transform-origin: center bottom;
+            position: absolute;
+            left: 49px;
+            width: 2px;
+            background: black;
+        }
+
+        .sec-arrow {
+            transition: cubic-bezier(.7, 2.3, .58, -0.24) 0.2s;
+            background: red;
+            height: 50px;
+            top: 0;
+            z-index: 3;
+        }
+
+        .min-arrow {
+            animation-duration: 3600s;
+            height: 40px;
+            top: 10px;
+            z-index: 4;
+        }
+
+        .hr-arrow {
+            animation-duration: 86400s;
+            height: 30px;
+            top: 20px;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="clocks">
+    <div class="clock running"></div>
+    <div class="clock editable"></div>
+</div>
+<div class="controls">
+    <!--suppress HtmlFormInputWithoutLabel -->
+    <input class="hr-input" type="number" max="23" min="0" value="0">
+    <!--suppress HtmlFormInputWithoutLabel -->
+    <input class="min-input" type="number" max="59" min="0" value="0">
+    <!--suppress HtmlFormInputWithoutLabel -->
+    <input class="sec-input" type="number" max="59" min="0" value="0">
+    <button class="run">RUN</button>
+    <button class="stop">STOP</button>
+</div>
+
+
+
+</body>
+
+<script>
+    const renderClock = (clock) => {
+        const secArrow = document.createElement('div');
+        secArrow.classList.add('sec-arrow');
+        clock.append(secArrow);
+
+        const minArrow = document.createElement('div');
+        minArrow.classList.add('min-arrow');
+        clock.append(minArrow);
+
+        const hrArrow = document.createElement('div');
+        hrArrow.classList.add('hr-arrow');
+        clock.append(hrArrow);
+
+
+        for (let i = 0; i < 60; i++) {
+            const gauge = document.createElement('div');
+            gauge.classList.add('gauge');
+            gauge.style.transform = `rotate(${i * 360 / 60}deg)`
+            clock.append(gauge);
+
+        }
+
+        for (let i = 0; i < 12; i++) {
+            const hr = document.createElement('div');
+            hr.classList.add('hour');
+
+            const txt = document.createElement('i');
+            txt.innerText = (i + 1).toString();
+            hr.append(txt);
+
+            const angle = (i + 1) * 360 / 12;
+            hr.style.transform = `rotate(${angle}deg)`;
+            txt.style.transform = `rotate(${-1 * angle}deg)`;
+            clock.append(hr);
+        }
+
+        const handlers = [];
+
+        let currentTime = [0, 0, 0]
+
+        const triggerChange = () => {
+            handlers.forEach(fn => fn(...currentTime.map(Math.floor)));
+        }
+
+        const normalizeCurrentTime = () => {
+            currentTime = currentTime.map(Math.floor);
+            if (currentTime[2] >= 60) {
+                currentTime[1]++;
+            }
+            if (currentTime[1] >= 60) {
+                currentTime[0]++;
+            }
+
+            currentTime[0] = currentTime[0] % 24;
+            currentTime[1] = currentTime[1] % 60;
+            currentTime[2] = currentTime[2] % 60;
+
+            currentTime[1] += currentTime[2] / 60;
+            currentTime[0] += currentTime[1] / 60;
+        }
+
+        const updateTime = () => {
+            normalizeCurrentTime();
+            hrArrow.style.transform = `rotate(${(currentTime[0] % 12) * 360 / 12}deg)`;
+            minArrow.style.transform = `rotate(${currentTime[1] * 360 / 60}deg)`;
+            const k = (Math.floor(currentTime[0]) * 60 * 60 + Math.floor(currentTime[1]) * 60) * 360 / 60;
+            secArrow.style.transform = `rotate(${k + (currentTime[2] * 360 / 60)}deg)`;
+            triggerChange();
+
+        }
+
+        const incrementSecond = () => {
+            currentTime[2]++;
+            updateTime();
+        }
+
+        let interval;
+
+        return {
+            setTime: (hour, minute, second) => {
+                currentTime = [hour, minute, second];
+                updateTime();
+            },
+            run: () => {
+                if (interval !== undefined) {
+                    return;
+                }
+                interval = setInterval(incrementSecond, 1000);
+            },
+            stop: () => {
+                clearInterval(interval);
+                interval = undefined;
+            },
+            onChange: (fn) => {
+                handlers.push(fn);
+            }
+        };
+    }
+
+    const runningClockEl = document.querySelector('.running');
+    const runningClock = renderClock(runningClockEl);
+
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const rotate = () => {
+        const now = new Date();
+        const msFromStart = now - startOfDay;
+        runningClock.setTime((msFromStart / (1000 * 60 * 60)) % 24, (msFromStart / (1000 * 60)) % 60, Math.floor((msFromStart / 1000) % 60));
+    }
+
+    rotate();
+    setInterval(() => {
+        rotate();
+    }, 1000)
+
+
+    const editableClockEl = document.querySelector('.editable');
+    const editableClock = renderClock(editableClockEl);
+    editableClock.onChange((...time) => {
+            time.forEach((v, i) => inputs[i].value = v);
+        }
+    );
+
+    const inputs = [...document.querySelectorAll('input')];
+    document.addEventListener('change', () => {
+        editableClock.setTime(...inputs.map(inp => parseInt(inp.value)));
+    });
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) {
+            return;
+        }
+
+        if (btn.classList.contains('run')) {
+            editableClock.run();
+        } else if (btn.classList.contains('stop')) {
+            editableClock.stop();
+        }
+    });
+
+</script>
+</html>
