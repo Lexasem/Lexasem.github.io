@@ -287,21 +287,9 @@
     const runningClockEl = document.querySelector('.running');
     const runningClock = renderClock(runningClockEl);
 
-
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const rotate = () => {
-        const now = new Date();
-        const msFromStart = now - startOfDay;
-        runningClock.setTime((msFromStart / (1000 * 60 * 60)) % 24, (msFromStart / (1000 * 60)) % 60, Math.floor((msFromStart / 1000) % 60));
-    }
-
-    rotate();
-    setInterval(() => {
-        rotate();
-    }, 1000)
-
+    const now = new Date();
+    runningClock.setTime(now.getHours(), now.getMinutes(), now.getSeconds());
+    runningClock.run();
 
     const editableClockEl = document.querySelector('.editable');
     const editableClock = renderClock(editableClockEl);
