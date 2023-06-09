@@ -18,11 +18,13 @@
         .controls {
             text-align: center;
         }
-        .controls input{
+
+        .controls input {
             width: 50px;
             font-size: 20px;
         }
-        .controls button{
+
+        .controls button {
             font-size: 20px;
             padding: 2px 10px;
             text-transform: uppercase;
@@ -30,15 +32,17 @@
             border: none;
             cursor: pointer;
         }
-        .controls button:active{
+
+        .controls button:active {
             color: gray;
         }
 
-        .run{
+        .run {
             background: darkgreen;
             color: white;
         }
-        .stop{
+
+        .stop {
             background: red;
             color: white;
         }
@@ -142,11 +146,13 @@
 </div>
 <div class="controls">
     <!--suppress HtmlFormInputWithoutLabel -->
-    <input class="hr-input" type="number" value="0">
+    <input class="speed" value="1" type="number">
     <!--suppress HtmlFormInputWithoutLabel -->
-    <input class="min-input" type="number" value="0">
+    <input class="time-input hr-input" type="number" value="0">
     <!--suppress HtmlFormInputWithoutLabel -->
-    <input class="sec-input" type="number" value="0">
+    <input class="time-input min-input" type="number" value="0">
+    <!--suppress HtmlFormInputWithoutLabel -->
+    <input class="time-input sec-input" type="number" value="0">
     <button class="run">RUN</button>
     <button class="stop">STOP</button>
 </div>
@@ -245,7 +251,7 @@
         }
 
         let interval;
-
+        let speed = 1000;
         return {
             setTime: (hour, minute, second) => {
                 currentTime = [hour, minute, second];
@@ -255,7 +261,7 @@
                 if (interval !== undefined) {
                     return;
                 }
-                interval = setInterval(incrementSecond, 1000);
+                interval = setInterval(incrementSecond, speed);
             },
             stop: () => {
                 clearInterval(interval);
@@ -263,6 +269,11 @@
             },
             onChange: (fn) => {
                 handlers.push(fn);
+            },
+            setSpeed: (value) => {
+                speed = value !== 0 ? 1000 / value : 1000;
+                this.stop();
+                this.run();
             }
         };
     }
@@ -293,9 +304,13 @@
         }
     );
 
-    const inputs = [...document.querySelectorAll('input')];
-    document.addEventListener('change', () => {
-        editableClock.setTime(...inputs.map(inp => parseInt(inp.value)));
+    const inputs = [...document.querySelectorAll('.time-input')];
+    document.addEventListener('change', (e) => {
+        if(e.target.classList.contains('time-input')){
+            editableClock.setTime(...inputs.map(inp => parseInt(inp.value)));
+        }else if(e.target.classList.contains('speed')){
+            editableClock.setSpeed(e.target.value);
+        }
     });
 
     document.addEventListener('click', (e) => {
