@@ -271,12 +271,15 @@
             onChange: (fn) => {
                 handlers.push(fn);
             },
+            isRunning: () => interval !== undefined,
             setSpeed: function (value) {
                 const float = parseFloat(value);
 
                 speed = isNaN(float) || float <= 0 ? 1000 : 1000 / value;
-                this.stop();
-                this.run();
+                if (this.isRunning()) {
+                    this.stop();
+                    this.run();
+                }
             }
         };
     }
