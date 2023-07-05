@@ -15,6 +15,7 @@
         }
 
         .stick {
+            cursor: pointer;
             width: 33%;
             border: 1px solid transparent;
             padding: 0 20px;
@@ -23,15 +24,17 @@
             flex-direction: column;
             justify-content: flex-end;
             background: rgb(255, 255, 255);
-            background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 48%, rgba(0, 0, 0, 1) 50%, rgba(255, 255, 255, 1) 52%, rgba(255, 255, 255, 1) 100%);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 49%, rgba(0, 0, 0, 1) 50%, rgba(255, 255, 255, 1) 51%, rgba(255, 255, 255, 1) 100%);
         }
 
-        .stick[data-selected="1"] {
-            border-color: orange;
+        .stick[data-selected="1"] .disk:first-child{
+            border: 4px dashed red;
+            /*background: gray !important;*/
         }
 
         .disk {
-            margin: 2px auto 0 auto;
+            box-sizing: border-box;
+            margin: 2px auto;
             background: red;
             border-radius: 20%;
             height: 20px;
@@ -111,7 +114,7 @@
                 const color = colors[(disk - 1) % (colors.length)];
                 const diskEl = document.createElement('div');
                 diskEl.classList.add('disk');
-                diskEl.style.width = (disk * 20) + 'px'
+                diskEl.style.width = (disk * 5 + 20) + '%'
                 diskEl.style.background = color;
                 stickEl.prepend(diskEl)
             })
