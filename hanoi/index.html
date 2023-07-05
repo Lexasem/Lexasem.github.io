@@ -1,0 +1,197 @@
+<!doctype html>
+<!--suppress CssUnusedSymbol -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Hanoi tower</title>
+    <style>
+        #app {
+            display: flex;
+            width: 90%;
+            margin: 100px auto;
+        }
+
+        .stick {
+            width: 33%;
+            border: 1px solid transparent;
+            padding: 0 20px;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: rgb(255, 255, 255);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 48%, rgba(0, 0, 0, 1) 50%, rgba(255, 255, 255, 1) 52%, rgba(255, 255, 255, 1) 100%);
+        }
+
+        .stick[data-selected="1"] {
+            border-color: orange;
+        }
+
+        .disk {
+            margin: 2px auto 0 auto;
+            background: red;
+            border-radius: 20%;
+            height: 20px;
+        }
+
+        .error {
+            font-size: 30px;
+            text-align: center;
+            color: red;
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+
+<!--suppress HtmlFormInputWithoutLabel -->
+<input type="text" value="10">
+<button class="restart">restart</button>
+<button class="solve">solve</button>
+<div id="app"></div>
+<div class="error"></div>
+<script>
+    Array.prototype.getLast = function () {
+        return this[this.length - 1];
+    }
+
+    const colors = [
+        'darkmagenta',
+        'navy',
+        'blue',
+        'darkslategrey',
+        'gold',
+        'darkorange',
+        'darkred',
+    ];
+
+    /**
+     * @type number[][]
+     */
+    let sticks = [[], [], []];
+
+    const initDisks = (cnt, stick) => {
+        sticks = [[], [], []];
+        for (let i = cnt; i !== 0; i--) {
+            sticks[stick].push(i);
+        }
+    }
+
+    const moveDisk = (from, to) => {
+        const srcStick = sticks[from];
+        const dstStick = sticks[to];
+
+        const srcDisk = srcStick.getLast();
+        if (srcDisk === undefined) {
+            throw new Error('disk not found in ' + from + 'stick');
+        }
+        const dstDisk = dstStick.getLast();
+        if (dstDisk && dstDisk < srcDisk) {
+            throw new Error('cannot move disk ' + srcDisk + ' to stick ' + to + ' there is smaller disk (' + dstDisk + ') exists');
+        }
+
+        //do move
+        console.log('moving disk no %i from %i to %i', srcDisk, from, to);
+        srcStick.pop();
+        dstStick.push(srcDisk);
+    }
+
+
+    const render = (el) => {
+        app.innerHTML = '';
+        sticks.forEach((disks, i) => {
+            const stickEl = document.createElement('div');
+            stickEl.classList.add('stick');
+            stickEl.dataset.num = i.toString();
+            stickEl.dataset.selected = "0";
+            disks.forEach(disk => {
+                const color = colors[(disk - 1) % (colors.length)];
+                const diskEl = document.createElement('div');
+                diskEl.classList.add('disk');
+                diskEl.style.width = (disk * 20) + 'px'
+                diskEl.style.background = color;
+                stickEl.prepend(diskEl)
+            })
+            el.append(stickEl);
+        })
+
+    }
+
+    const solve = (from, to, size = undefined) => {
+        const srcStick = sticks[from];
+        const n = size === undefined ? srcStick.length - 1 : size;
+        let moves = [];
+        if (n === 0) {
+            moves.push([from, to]);
+        } else {
+            const tmp = 3 - from - to;
+            moves = solve(from, tmp, n - 1);
+            moves.push([from, to]);
+            moves.push(...solve(tmp, to, n - 1));
+        }
+        return moves;
+
+    }
+
+    const input = document.querySelector('input');
+
+    const app = document.getElementById('app');
+    initDisks(parseInt(input.value), 0);
+    render(app);
+
+    app.addEventListener('click', e => {
+        const stick = e.target.closest('.stick');
+        if (stick) {
+            if (stick.dataset.selected === "1") {
+                stick.dataset.selected = "0";
+            } else {
+                const sourceStick = document.querySelector('.stick[data-selected="1"]');
+                if (sourceStick && sourceStick.dataset.selected === "1") {
+                    //move
+                    try {
+                        moveDisk(sourceStick.dataset.num, stick.dataset.num);
+                    } catch (e) {
+                        console.log(e);
+                    }
+                    render(app)
+                } else {
+                    stick.dataset.selected = "1";
+                }
+            }
+        }
+
+    })
+
+    const [restartBtn, solveBtn] = document.querySelectorAll('button');
+    restartBtn.addEventListener('click', () => {
+        initDisks(parseInt(input.value), 0);
+        render(app);
+    })
+
+
+    const moveDelayed = async moves => {
+        for (let move of moves) {
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    moveDisk(...move);
+                    render(app);
+                    resolve();
+                }, 200)
+            });
+        }
+    }
+
+    solveBtn.addEventListener('click', () => {
+        initDisks(parseInt(input.value), 0);
+        render(app);
+        const moves = solve(0, 1);
+        moveDelayed(moves).then();
+
+    })
+
+</script>
+</body>
+</html>
