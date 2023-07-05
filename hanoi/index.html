@@ -40,7 +40,7 @@
         .error {
             font-size: 30px;
             text-align: center;
-            color: red;
+            color: white;
             background: darkred;
         }
     </style>
@@ -137,6 +137,7 @@
     }
 
     const input = document.querySelector('input');
+    const error = document.querySelector('.error');
 
     const app = document.getElementById('app');
     initDisks(parseInt(input.value), 0);
@@ -154,7 +155,8 @@
                     try {
                         moveDisk(sourceStick.dataset.num, stick.dataset.num);
                     } catch (e) {
-                        console.log(e);
+                        error.innerText = '× ' + e;
+                        setTimeout(() => error.innerText = '', 3000);
                     }
                     render(app)
                 } else {
